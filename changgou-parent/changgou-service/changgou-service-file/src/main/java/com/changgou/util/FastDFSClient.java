@@ -1,14 +1,14 @@
 package com.changgou.util;
 
 import com.changgou.file.FastDFSFile;
+import org.csource.common.MyException;
 import org.csource.common.NameValuePair;
-import org.csource.fastdfs.ClientGlobal;
-import org.csource.fastdfs.StorageClient;
-import org.csource.fastdfs.TrackerClient;
-import org.csource.fastdfs.TrackerServer;
+import org.csource.fastdfs.*;
 import org.springframework.core.io.ClassPathResource;
 
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 
 /**
  * @Author : yuzebo <511729587@qq.com>
@@ -33,7 +33,7 @@ public class FastDFSClient {
 
     /****
      * 文件上传
-     * @param file : 要上传的文件信息封装->FastDFSFile
+     * @param fastDFSFile : 要上传的文件信息封装->FastDFSFile
      * @return String[]
      *          1:文件上传所存储的组名
      *          2:文件存储路径
@@ -64,6 +64,103 @@ public class FastDFSClient {
         }
 
         return  uploadResults;
+    }
+
+    /***
+     * 文件下载
+     * @param groupName:组名
+     * @param remoteFileName：文件存储完整名
+     * @return
+     */
+    public static InputStream downFile(String groupName, String remoteFileName){
+        try {
+            //创建TrackerClient对象
+            TrackerClient trackerClient = new TrackerClient();
+            //通过TrackerClient对象创建TrackerServer
+            TrackerServer trackerServer = trackerClient.getConnection();
+            //通过TrackerServer创建StorageClient
+            StorageClient storageClient = new StorageClient(trackerServer,null);
+            //通过StorageClient下载文件
+            byte[] fileByte = storageClient.download_file(groupName, remoteFileName);
+            //将字节数组转换成字节输入流
+            return new ByteArrayInputStream(fileByte);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /***
+     * 文件删除实现
+     * @param groupName:组名
+     * @param remoteFileName：文件存储完整名
+     */
+    public static void deleteFile(String groupName,String remoteFileName){
+        try {
+            //创建TrackerClient对象
+            TrackerClient trackerClient = new TrackerClient();
+            //通过TrackerClient获取TrackerServer对象
+            TrackerServer trackerServer = trackerClient.getConnection();
+            //通过TrackerServer创建StorageClient
+            StorageClient storageClient = new StorageClient(trackerServer,null);
+            //通过StorageClient删除文件
+            storageClient.delete_file(groupName,remoteFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    /***
+     * @param groupName:组名
+     * @param remoteFileName：文件存储完整名
+     */
+
+    public static FileInfo getFileInfo(String groupName, String remoteFileName) throws IOException, MyException {
+        //创建TrackerClient客户端对象
+        TrackerClient trackerClient = new TrackerClient();
+        //通过TrackerClient对象获取TrackerServer信息
+        TrackerServer trackerServer = trackerClient.getConnection();
+        //获取StorageClient对象
+        StorageClient storageClient = new StorageClient(trackerServer, null);
+
+        return storageClient.get_file_info(groupName,remoteFileName);
+    }
+
+    /***
+     * 获取组信息
+     * @param groupName :组名
+     */
+    public static StorageServer getStorages(String groupName){
+        try {
+            //创建TrackerClient对象
+            TrackerClient trackerClient = new TrackerClient();
+            //通过TrackerClient获取TrackerServer对象
+            TrackerServer trackerServer = trackerClient.getConnection();
+            //通过trackerClient获取Storage组信息
+            return trackerClient.getStoreStorage(trackerServer,groupName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /***
+     * 根据文件组名和文件存储路径获取Storage服务的IP、端口信息
+     * @param groupName :组名
+     * @param remoteFileName ：文件存储完整名
+     */
+    public static ServerInfo[] getServerInfo(String groupName, String remoteFileName){
+        try {
+            //创建TrackerClient对象
+            TrackerClient trackerClient = new TrackerClient();
+            //通过TrackerClient获取TrackerServer对象
+            TrackerServer trackerServer = trackerClient.getConnection();
+            //获取服务信息
+            return trackerClient.getFetchStorages(trackerServer,groupName,remoteFileName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     /***
